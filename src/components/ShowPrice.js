@@ -39,7 +39,7 @@ function ShowPrice() {
                   className="text-center mb-4"
                   style={{ color: "#343a40", fontWeight: "bold" }}
                 >
-                  Metal Prices
+                  Kathmandu Gold and Silver Dealers' Association
                 </Card.Title>
                 <Table
                   bordered

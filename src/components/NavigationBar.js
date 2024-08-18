@@ -1,22 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar, Nav, Container, Button, Modal } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 function NavigationBar() {
-  const [show, setShow] = React.useState(false);
+  const [show, setShow] = useState(false);
+  const [dateTime, setDateTime] = useState(new Date());
   const navigate = useNavigate();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   const handleClear = () => {
-    // Clear localStorage and close modal
     localStorage.removeItem("metalEntries");
     setShow(false);
-    // Navigate to the ShowPrice page to reflect the cleared data
     navigate("/show-price");
   };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -33,6 +40,9 @@ function NavigationBar() {
                 <Nav.Link>Show Prices</Nav.Link>
               </LinkContainer>
             </Nav>
+            <Navbar.Text className="me-3 text-white">
+              {dateTime.toLocaleDateString()} {dateTime.toLocaleTimeString()}
+            </Navbar.Text>
             <Button variant="outline-danger" onClick={handleShow}>
               Clear Table
             </Button>
