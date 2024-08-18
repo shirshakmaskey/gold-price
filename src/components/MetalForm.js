@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Button,
@@ -8,10 +8,11 @@ import {
   Col,
   Card,
 } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 const wrapperStyle = {
-  backgroundColor: "#e0e2e5", // Light grey background for the page
-  minHeight: "100vh", // Full viewport height
+  backgroundColor: "#f0f2f5",
+  minHeight: "100vh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -25,6 +26,15 @@ function MetalForm() {
   });
 
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Load existing entries from localStorage
+  useEffect(() => {
+    const savedEntries = JSON.parse(localStorage.getItem("metalEntries")) || [];
+    setEntries(savedEntries);
+  }, []);
+
+  const [entries, setEntries] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,11 +48,32 @@ function MetalForm() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate a form submission
+    const newEntry = { ...formData };
+    const existingEntries =
+      JSON.parse(localStorage.getItem("metalEntries")) || [];
+
+    // Check if the metal already exists
+    const existingIndex = existingEntries.findIndex(
+      (entry) => entry.metal.toLowerCase() === newEntry.metal.toLowerCase()
+    );
+
+    if (existingIndex !== -1) {
+      // Update the existing entry's prices
+      existingEntries[existingIndex].tenGrams = newEntry.tenGrams;
+      existingEntries[existingIndex].oneTola = newEntry.oneTola;
+    } else {
+      // Add the new entry to the array
+      existingEntries.push(newEntry);
+    }
+
+    // Save updated entries to localStorage
+    localStorage.setItem("metalEntries", JSON.stringify(existingEntries));
+    setEntries(existingEntries);
+
     setTimeout(() => {
-      console.log("Form Submitted:", formData);
       setLoading(false);
-    }, 2000);
+      navigate("/show-price", { state: existingEntries });
+    }, 1000);
   };
 
   const handleClear = () => {
