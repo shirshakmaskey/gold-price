@@ -1,157 +1,204 @@
 import React, { useState, useEffect } from "react";
-import {
-  Form,
-  Button,
-  Spinner,
-  Container,
-  Row,
-  Col,
-  Card,
-} from "react-bootstrap";
+import { Form, Card, Container, Table, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import Creatable, { useCreatable } from "react-select/creatable";
+import "../css/MetalForm.css";
 
-const wrapperStyle = {
-  backgroundColor: "#f0f2f5",
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
+const initialMetalOptions = [
+  { value: "Gold 24K", label: "Gold 24K" },
+  { value: "Gold 22K", label: "Gold 22K" },
+  { value: "Silver 24K", label: "Silver 24K" },
+  { value: "Gold Selling Rate", label: "Gold Selling Rate" },
+  { value: "Silver Selling Rate", label: "Silver Selling Rate" },
+];
 
 function MetalForm() {
-  const [formData, setFormData] = useState({
-    metal: "",
-    tenGrams: "",
-    oneTola: "",
+  const [entries, setEntries] = useState(() => {
+    const savedEntries = localStorage.getItem("metalEntries");
+    return savedEntries ? JSON.parse(savedEntries) : [];
   });
-
-  const [loading, setLoading] = useState(false);
+  const [metalOptions, setMetalOptions] = useState(initialMetalOptions);
+  const [duplicateMetals, setDuplicateMetals] = useState([]);
   const navigate = useNavigate();
 
-  // Load existing entries from localStorage
   useEffect(() => {
-    const savedEntries = JSON.parse(localStorage.getItem("metalEntries")) || [];
-    setEntries(savedEntries);
-  }, []);
+    const duplicates = entries
+      .map((entry, index) => ({ ...entry, index }))
+      .filter(
+        (entry, index, self) =>
+          self.findIndex(
+            (e) => e.metal === entry.metal && e.index !== entry.index
+          ) !== -1
+      )
+      .map((entry) => entry.metal);
 
-  const [entries, setEntries] = useState([]);
+    setDuplicateMetals([...new Set(duplicates)]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
+    if (
+      entries.length === 0 ||
+      (entries[entries.length - 1].metal &&
+        entries[entries.length - 1].tenGrams !== "" &&
+        entries[entries.length - 1].oneTola !== "")
+    ) {
+      setEntries([...entries, { metal: "", tenGrams: "", oneTola: "" }]);
+    }
+  }, [entries]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const newEntry = { ...formData };
-    const existingEntries =
-      JSON.parse(localStorage.getItem("metalEntries")) || [];
-
-    // Check if the metal already exists
-    const existingIndex = existingEntries.findIndex(
-      (entry) => entry.metal.toLowerCase() === newEntry.metal.toLowerCase()
+  const handleInputChange = (index, field, value) => {
+    let updatedEntries = entries.map((entry, i) =>
+      i === index ? { ...entry, [field]: value } : entry
     );
 
-    if (existingIndex !== -1) {
-      // Update the existing entry's prices
-      existingEntries[existingIndex].tenGrams = newEntry.tenGrams;
-      existingEntries[existingIndex].oneTola = newEntry.oneTola;
-    } else {
-      // Add the new entry to the array
-      existingEntries.push(newEntry);
+    if (field === "metal" && !value) {
+      updatedEntries = updatedEntries.slice(0, index).concat(
+        updatedEntries.slice(index + 1).map((entry, i) => ({
+          ...entry,
+          tenGrams: i >= index ? "" : entry.tenGrams,
+          oneTola: i >= index ? "" : entry.oneTola,
+        }))
+      );
     }
 
-    // Save updated entries to localStorage
-    localStorage.setItem("metalEntries", JSON.stringify(existingEntries));
-    setEntries(existingEntries);
+    if (
+      updatedEntries.length > 0 &&
+      !updatedEntries[updatedEntries.length - 1].metal
+    ) {
+      updatedEntries.pop();
+    }
 
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/show-price", { state: existingEntries });
-    }, 1000);
+    if (
+      updatedEntries.length === 0 ||
+      (updatedEntries[updatedEntries.length - 1].metal &&
+        updatedEntries[updatedEntries.length - 1].tenGrams !== "" &&
+        updatedEntries[updatedEntries.length - 1].oneTola !== "")
+    ) {
+      updatedEntries.push({ metal: "", tenGrams: "", oneTola: "" });
+    }
+
+    setEntries(updatedEntries);
+    localStorage.setItem("metalEntries", JSON.stringify(updatedEntries));
   };
 
-  const handleClear = () => {
-    setFormData({
-      metal: "",
-      tenGrams: "",
-      oneTola: "",
-    });
+  const handleMetalChange = (index, selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+    handleInputChange(index, "metal", value);
+  };
+
+  const handleSaveAndView = () => {
+    const validEntries = entries.filter((entry) => entry.metal);
+    navigate("/show-price", { state: validEntries });
   };
 
   return (
-    <div style={wrapperStyle}>
-      <Container>
-        <Row className="justify-content-center w-100">
-          <Col md={6} lg={4}>
-            <Card className="shadow-lg bg-white">
-              <Card.Body>
-                <Card.Title className="text-center mb-4">
-                  Set Metal Prices
-                </Card.Title>
-                <Form onSubmit={handleSubmit}>
-                  <Form.Group controlId="formMetal" className="mb-3">
-                    <Form.Label>Metal</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="metal"
-                      value={formData.metal}
-                      onChange={handleChange}
-                      placeholder="Enter metal name"
-                      required
-                    />
-                  </Form.Group>
+    <Container
+      fluid
+      className="d-flex justify-content-center align-items-center min-vh-100"
+      style={{ backgroundColor: "#f7f7f7" }}
+    >
+      <Card
+        style={{
+          width: "100%",
+          maxWidth: "900px",
+          padding: "20px",
+          boxShadow: "0px 0px 15px rgba(0,0,0,0.2)",
+        }}
+      >
+        <Card.Body>
+          <Card.Title>Set Metal Prices</Card.Title>
 
-                  <Form.Group controlId="formTenGrams" className="mb-3">
-                    <Form.Label>10 Grams</Form.Label>
-                    <Form.Control
-                      type="number"
-                      step="0.01"
-                      name="tenGrams"
-                      value={formData.tenGrams}
-                      onChange={handleChange}
-                      placeholder="Enter value for 10 grams"
-                      required
-                    />
-                  </Form.Group>
+          {/* Display Helper Text for Duplicate Metal */}
+          {duplicateMetals.length > 0 && (
+            <Alert variant="warning">
+              {`The metal(s) ${duplicateMetals.join(
+                ", "
+              )} are already entered in other rows.`}
+            </Alert>
+          )}
 
-                  <Form.Group controlId="formOneTola" className="mb-3">
-                    <Form.Label>1 Tola</Form.Label>
-                    <Form.Control
-                      type="number"
-                      step="0.01"
-                      name="oneTola"
-                      value={formData.oneTola}
-                      onChange={handleChange}
-                      placeholder="Enter value for 1 tola"
-                      required
-                    />
-                  </Form.Group>
+          {/* Editable Table */}
+          <div
+            style={{
+              maxHeight: entries.length > 4 ? "200px" : "none",
+              overflowY: entries.length > 4 ? "auto" : "visible",
+            }}
+          >
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Metal</th>
+                  <th>Price per 10 Grams</th>
+                  <th>Price per 1 Tola</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry, index) => {
+                  const isDuplicate =
+                    entry.metal && duplicateMetals.includes(entry.metal);
 
-                  <div className="d-flex justify-content-between">
-                    <Button variant="secondary" onClick={handleClear}>
-                      Clear
-                    </Button>
-                    <Button variant="primary" type="submit" disabled={loading}>
-                      {loading ? (
-                        <Spinner animation="border" size="sm" />
-                      ) : (
-                        "Submit"
-                      )}
-                    </Button>
-                  </div>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-    </div>
+                  return (
+                    <tr
+                      key={index}
+                      className={isDuplicate ? "duplicate-row" : ""}
+                    >
+                      <td>
+                        <Creatable
+                          value={
+                            entry.metal
+                              ? { value: entry.metal, label: entry.metal }
+                              : null
+                          }
+                          onChange={(selectedOption) =>
+                            handleMetalChange(index, selectedOption)
+                          }
+                          options={metalOptions}
+                          isClearable
+                          isSearchable
+                          placeholder="Select or type a metal..."
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="number"
+                          step="0.01"
+                          value={entry.tenGrams}
+                          onChange={(e) =>
+                            handleInputChange(index, "tenGrams", e.target.value)
+                          }
+                          disabled={!entry.metal}
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="number"
+                          step="0.01"
+                          value={entry.oneTola}
+                          onChange={(e) =>
+                            handleInputChange(index, "oneTola", e.target.value)
+                          }
+                          disabled={!entry.metal}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </div>
+
+          <Form>
+            <Form.Group>
+              <Form.Control
+                as="button"
+                onClick={handleSaveAndView}
+                className="btn btn-secondary mt-4"
+              >
+                Save & View Prices
+              </Form.Control>
+            </Form.Group>
+          </Form>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 }
 

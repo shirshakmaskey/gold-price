@@ -1,0 +1,52 @@
+/* MetalForm.css */
+.table tr {
+  transition: background-color 0.3s, box-shadow 0.3s, border 0.3s;
+}
+
+.table tr.duplicate-row {
+  background-color: #f8d7da; /* Light red background for duplicates */
+  border: 2px solid #dc3545; /* Red border for emphasis */
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); /* Strong red glow effect */
+}
+
+.custom-single-value {
+  display: flex;
+  align-items: center;
+}
+
+.custom-option {
+  display: flex;
+  align-items: center;
+}
+
+.duplicate-row {
+  border: 2px solid red; /* Highlight duplicate row with a red border */
+  animation: glow 1s ease-in-out infinite; /* Optional glowing effect */
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px red;
+  }
+  50% {
+    box-shadow: 0 0 10px red;
+  }
+  100% {
+    box-shadow: 0 0 5px red;
+  }
+}
+
+/* Remove extra border or styling from the select dropdown */
+.react-select__control {
+  border: 1px solid #ced4da;
+  box-shadow: none;
+}
+
+.react-select__control--is-focused {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.25);
+}
+
+.react-select__indicator-separator {
+  display: none;
+}
