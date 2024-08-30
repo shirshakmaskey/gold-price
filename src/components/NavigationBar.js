@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Navbar, Nav, Container, Button, Modal } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { useNavigate } from "react-router-dom";
+import logo from "../logo.svg"; // Update with the correct path to your logo
 
 function NavigationBar() {
   const [show, setShow] = useState(false);
@@ -29,7 +30,14 @@ function NavigationBar() {
     <>
       <Navbar bg="dark" variant="dark" expand="lg">
         <Container>
-          <Navbar.Brand href="#">Metal Price Manager</Navbar.Brand>
+          <Navbar.Brand href="#">
+            <img
+              src={logo}
+              alt="Metal Price Manager Logo"
+              style={{ width: "30px", height: "30px", marginRight: "10px" }}
+            />
+            Metal Price Manager
+          </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
